@@ -5,14 +5,16 @@ import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
 export default defineNuxtPlugin(() => {
+	const config = useRuntimeConfig();
+	// console.log("Firebase Config:", config);
   const firebaseConfig = {
-		apiKey: "AIzaSyAiu3cEZCMSWGzWvKOFHKuf1NP9r66zKOQ",
-		authDomain: "bima-awards.firebaseapp.com",
-		projectId: "bima-awards",
-		storageBucket: "bima-awards.firebasestorage.app",
-		messagingSenderId: "826809161484",
-		appId: "1:826809161484:web:7afe36a302c48365fa1b29",
-		measurementId: "G-LE2PEM88RR"
+		apiKey: config.public.apiKey,
+		authDomain: config.public.authDomain,
+		projectId: config.public.projectId,
+		storageBucket: config.public.storageBucket,
+		messagingSenderId: config.public.messagingSenderId,
+		appId: config.public.appId,
+		measurementId: config.public.measurementId
   }
 
   const app = initializeApp(firebaseConfig)

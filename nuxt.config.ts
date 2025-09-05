@@ -22,5 +22,19 @@ export default defineNuxtConfig({
         { src: 'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js', defer: true }
       ]
     }
+  },
+  runtimeConfig: {
+    // server-only (never exposed to client)
+
+    // public (safe to expose to client)
+    public: {
+      apiKey: process.env.API_KEY,
+      authDomain: process.env.AUTH_DOMAIN,
+      projectId: process.env.PROJECT_ID,
+      storageBucket: process.env.STORAGE_BUCKET,
+      messagingSenderId: process.env.MESSAGING_SENDER_ID,
+      appId: process.env.APP_ID,
+      measurementId: process.env.MEASUREMENT_ID,
+    }
   }
 })
