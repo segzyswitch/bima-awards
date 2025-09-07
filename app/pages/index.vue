@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { collection, getDocs } from "firebase/firestore";
+const { $db } = useNuxtApp();
 
-const { $db } = useNuxtApp()
-const contestants = ref<any[]>([])
+const contestants = ref<any[]>([]);
+const payment_methods = ref<any[]>([]);
 
 onMounted(async () => {
-  const snapshot = await getDocs(collection($db, "contestants"))
-  contestants.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-})
+	// fetch contestants
+  const constestSnapshot = await getDocs(collection($db, "contestants"));
+  contestants.value = constestSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+	// fetch payment methods
+	const paymentSnapshot = await getDocs(collection($db, "payment_methods"));
+	payment_methods.value = paymentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+	// console.log(payment_methods.value);
+});
 </script>
 
 <template>
@@ -76,7 +82,7 @@ onMounted(async () => {
 					</button>
 					
 					<!-- Modal -->
-					<votingModal :nominee="nominee" />
+					<votingModal :nominee="nominee" :payment_methods="payment_methods" />
 				</div>
 			</div>
 		</div>
