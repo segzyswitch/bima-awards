@@ -1,4 +1,11 @@
 <script lang="ts" setup>
+import { useCloudinary } from '~/composables/useCloudinary';
+const { uploadProof } = useCloudinary();
+
+import { closeModal } from '~/utils/modal';
+// SweetAlert
+const { $swal } = useNuxtApp();
+
 // Define props
 const props = defineProps<{
   nominee: any,
@@ -14,11 +21,10 @@ const votePricing = [
 ];
 
 const activePage:any = ref(null);
-const manualAmount = ref<number | null>(null);
-const selectedPricing = ref<{ votes: number; price: number } | null>(null);
+const manualAmount = ref(0);
 const donateTerms = ref(false);
 
-const manualVote = computed((): { votes: number; price: number } => {
+const priceData = computed((): { votes: number; price: number } => {
   return {
     price: (manualAmount.value ?? 0),
 		votes: (manualAmount.value ?? 0) * 2.5
@@ -28,12 +34,11 @@ const payAuto = ref(true);
 function makeVote(query: { votes: number; price: number } | 'manual') {
 	if (query == 'manual') {
 		payAuto.value = false;
-		// handle manual amount
-		selectedPricing.value = manualVote.value;
+		manualAmount.value = 0;
 		return false;
 	}
+	manualAmount.value = query.price;
 	payAuto.value = true;
-	selectedPricing.value = query;
 }
 
 // Payment methods
@@ -72,24 +77,55 @@ const handleFileChange = (e: Event) => {
 
 // Send votes
 import { useVotes } from '~/composables/useVotes';
-const { submitVote, loading, error } = useVotes();
-function castVote() {
-	// validate form
+const { submitVote } = useVotes();
+async function castVote() {
 	loadData.value = true;
-	// return false;
+	// validate form
+	formerr.value.email = formdata.value.email ? null : 'Email is required';
+	formerr.value.payment_method = selectedMethod.value ? null : 'Select payment method';
+	if (formerr.value.email || formerr.value.payment_method) {
+		loadData.value = false;
+		return;
+	}
+
+	// upload proof if available
+  let proofUrl: string | null = null;
+  if (file.value != null) {
+    proofUrl = await uploadProof(file.value);
+  }
+	// prepare data
 	const voteData = {
-		userEmail: formdata.email,
+		userEmail: formdata.value.email,
 		contestantId: props.nominee.id,
-		votes: selectedPricing.value?.votes || 0,
-		amountPaid: selectedPricing.value?.price || 0,
-		paymentMethod: selectedMethod?.name || '',
+		votes: priceData.value?.votes || 0,
+		amountPaid: priceData.value?.price || 0,
+		paymentMethod: selectedMethod.value?.name || '',
 		category: props.nominee.category || '',
-		proofFile: file.value || null,
+		proofFile: proofUrl,
 	};
-	submitVote(voteData).then((resp) => {
+	// return console.log(voteData);
+	submitVote(voteData).then((resp:any) => {
 		loadData.value = false;
 		console.log(resp);
-		// close modal
+		if ( resp?.success == true ) {
+			// close modal
+			closeModal(`Modal_${props.nominee.id}`);
+			payAuto.value = true;
+			manualAmount.value = 0;
+			formdata.value.email = '';
+			selectedMethod.value = null;
+			$swal.fire({
+        title: 'Thank You!',
+        icon: 'success',
+        text: "Vote submitted, stay tuned we will send updates via email!",
+      });
+		}else {
+			$swal.fire({
+        title: 'Error!',
+        icon: 'warning',
+        text: resp.error,
+      });
+		}
 	}).catch((err) => {
 		loadData.value = false;
 		console.log(err);
@@ -100,14 +136,14 @@ function castVote() {
 
 <template>
 	<teleport to="body">
-		<div class="modal fade" :id="`Modal_${nominee.id}`" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+		<div class="modal fade" :id="`Modal_${nominee.id}`" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content text-light text-center">
-					<div class="modal-header border-0" v-if="!activePage">
+					<div class="modal-header border-0 d-block text-start" v-if="!activePage">
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<form @submit.prevent v-if="!activePage">
+						<form @submit.prevent="activePage='payment'" v-if="!activePage">
 							<h4 class="text-gold">Donate for this Nominee</h4>
 							<div class="col-7 col-sm-4 mx-auto py-2 mb-2 rounded-circle">
 								<div class="contest-img overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div>
@@ -117,8 +153,8 @@ function castVote() {
 							<div class="w-100 rounded-3 border border-gold p-3 mb-4">
 								<h5>Select Donation Amount</h5>
 								<div class="row g-4 pt-3">
-									<div class="col-6" v-for="rates in votePricing" :key="rates.votes">
-										<button type="button" @click="makeVote(rates)" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': selectedPricing?.price==rates.price}">{{ rates.votes }} votes <br /> ${{rates.price}}</button>
+									<div class="col-6" v-for="(rates, idx) in votePricing" :key="idx">
+										<button type="button" @click="makeVote(rates)" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': manualAmount==rates.price}">{{ rates.votes }} votes <br /> ${{rates.price}}</button>
 									</div>
 									<div class="col-6">
 										<button type="button" @click="makeVote('manual')" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': !payAuto}">Custom amount <br /> above $200</button>
@@ -135,7 +171,7 @@ function castVote() {
 											required
 										/>
 										<small class="d-block pt-2 text-start" style="opacity:.6;" v-if="manualAmount && manualAmount>0">
-											${{ `${manualAmount} = ${manualAmount * 2.5} votes` }}
+											${{ `${priceData.price} = ${priceData.votes} votes` }}
 										</small>
 									</div>
 								</div>
@@ -145,7 +181,7 @@ function castVote() {
 								<span class="ms-2">I agree that all donations are final and non-refundable.</span>
 							</label>
 							<p class="text-center">
-								<button :disabled="!donateTerms||!selectedPricing" @click="activePage='payment'" style="scale:1.2;" type="submit" class="btn btn-warning px-4">Continue</button>
+								<button :disabled="!donateTerms||manualAmount<1" style="scale:1.2;" type="submit" class="btn btn-warning px-4">Continue</button>
 							</p>
 						</form>
 						<form @submit.prevent="castVote" class="position-relative" v-if="activePage=='payment'">
@@ -154,13 +190,13 @@ function castVote() {
 									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 								</button>
 							</p>
-							<h1 class="text-gold">Donate ${{ selectedPricing?.price }} for {{ selectedPricing?.votes }} points to vote:</h1>
+							<h1 class="text-gold">Donate ${{ priceData?.price }} for {{ priceData?.votes }} points to vote:</h1>
 							<p class="text-light text-uppercase h5">{{ nominee.name }}</p>
 							<p class="text-gold mb-4">In Category: <span class="text-uppercase">{{ nominee.category }}</span></p>
 							<div class="w-100 rounded-3 border border-gold p-3 mb-4 text-start">
 								<h5>Select payment method</h5>
-								<div class="row pt-3">
-									<div class="col-12 pb-3" v-for="(method, idx) in payment_methods" :key="idx">
+								<div class="row">
+									<div class="col-12 pt-3" v-for="(method, idx) in payment_methods" :key="idx">
 										<button type="button" @click="selectMethod(method)" class="btn border-gold bg-dark text-gold text-start w-100 d-flex"
 											:class="{'bg-gold text-dark': selectedMethod?.name==method?.name}">
 											<img :src="method.icon" class="my-auto" :alt="method.name" height="35" />
@@ -171,9 +207,11 @@ function castVote() {
 											<span class="bi bi-copy ms-auto text-muted my-auto"></span>
 										</button>
 									</div>
-									<div class="col-12 mb-4 mt-2">
+									<small class="text-danger d-block mt-1 mb-3" v-if="formerr?.payment_method">{{ formerr?.payment_method }}</small>
+									<div class="col-12 mb-4" :class="{'mt-4': !formerr?.payment_method}">
 										<label class="mb-1">Email address:</label>
-										<input type="email" placeholder="Email address" class="form-control" required />
+										<input type="email" placeholder="Email address" v-model="formdata.email" class="form-control" required />
+										<small class="text-danger d-block mt-1" v-if="formerr?.email">{{ formerr?.email }}</small>
 									</div>
 									<div class="col-12 mb-2">
 										<label class="mb-1">Proof of payment (optional):</label>
@@ -186,7 +224,7 @@ function castVote() {
 								</div>
 							</div>
 							<p class="text-center">
-								<button :disabled="!selectedPricing||loadData" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
+								<button :disabled="loadData" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
 									<i class="spinner-border spinner-border-sm" v-if="loadData"></i> Submit payment
 								</button>
 							</p>

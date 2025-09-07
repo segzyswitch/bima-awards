@@ -1,6 +1,5 @@
 import { ref } from "vue"
 import { addDoc, collection, serverTimestamp } from "firebase/firestore"
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
 
 type VoteData = {
   userEmail: string
@@ -9,7 +8,7 @@ type VoteData = {
   amountPaid: number
   paymentMethod: string,
 	category: string,
-  proofFile?: File | null
+  proofFile?: String | null
 }
 
 export function useVotes() {
@@ -22,16 +21,6 @@ export function useVotes() {
     error.value = null
 
     try {
-      let proofUrl: string | null = null
-
-      // Upload proof only if file is provided
-      if (vote.proofFile) {
-        const filePath = `proofs/${Date.now()}_${vote.proofFile.name}`
-        const fileRef = storageRef($storage as import("firebase/storage").FirebaseStorage, filePath)
-        await uploadBytes(fileRef, vote.proofFile)
-        proofUrl = await getDownloadURL(fileRef)
-      }
-
       // Prepare Firestore document
       const voteRecord: any = {
         userEmail: vote.userEmail,
@@ -40,11 +29,8 @@ export function useVotes() {
         amountPaid: vote.amountPaid,
         paymentMethod: vote.paymentMethod,
 				category: vote.category,
+				proofFileName: vote.proofFile,
         createdAt: serverTimestamp()
-      }
-
-      if (proofUrl) {
-        voteRecord.proof = proofUrl
       }
 
       // Save to Firestore

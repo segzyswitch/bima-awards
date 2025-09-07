@@ -114,6 +114,17 @@ header::after {
 	
 }
 
+/* SWAL */
+.swal2-confirm-button {
+  background-color: goldenrod!important;
+  border-color: goldenrod!important;
+  color: #010101!important;
+  padding: 7.5px 25px;
+  margin-top: .5em;
+  margin-bottom: 1.5em;
+  scale: 1.2;
+}
+
 
 /* Helpers */
 .bg-dark { background-color: #212121 !important; }
