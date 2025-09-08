@@ -48,11 +48,11 @@ function formatFirestoreTimestamp(timestamp: Timestamp): string {
 }
 
 const loadData = ref(true);
-// Fetch data on mount
-onMounted(async () => {
+
+async function loadAll() {
 	// fetch contestants
-  const constestSnapshot = await getDocs(collection($db, "contestants"));
-  Contestants.value = constestSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+	const constestSnapshot = await getDocs(collection($db, "contestants"));
+	Contestants.value = constestSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 	// fetch payment methods
 	const paymentSnapshot = await getDocs(collection($db, "payment_methods"));
 	paymentMethods.value = paymentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -61,6 +61,10 @@ onMounted(async () => {
 	Votes.value = votesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
 	loadData.value = false;
+}
+// Fetch data on mount
+onMounted( () => {
+	loadAll();
 });
 </script>
 
@@ -162,7 +166,7 @@ onMounted(async () => {
 						<h1 class="text-light my-auto">All Nominees</h1>
 						<button @click="selectNominee(null)" class="btn ms-auto btn-secondary my-auto">Add new</button>
 					</div>
-					<add-nominee :nominee="editNominee" />
+					<add-nominee :nominee="editNominee" @data-added="loadAll()" />
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
 					<table class="table text-light" v-else>
 						<thead>
@@ -175,7 +179,7 @@ onMounted(async () => {
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="(nom, idx) in Contestants" :key="idx">
+							<tr v-for="(nom, idx) in Contestants" :key="idx" :ref="`constTr${nom.id}`">
 								<th scope="row">{{ idx + 1 }}</th>
 								<td class="d-flex">
 									<div class="contest-img overflow-hidden border-0 p-1"
@@ -187,7 +191,7 @@ onMounted(async () => {
 								<td>{{ nom.category }}</td>
 								<td>{{ nom.votes }}</td>
 								<td>
-									<a href="javascript:void(0)" class="btn text-primary p-1">edit</a>
+									<a href="javascript:void(0)" class="btn text-primary p-1" @click="selectNominee(nom)">edit</a>
 									<a href="javascript:void(0)" class="btn text-danger p-1">delete</a>
 								</td>
 							</tr>

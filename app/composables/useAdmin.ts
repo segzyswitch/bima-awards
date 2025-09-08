@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore"
+import { addDoc, collection, doc, setDoc, getDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
 import { useCloudinary } from "./useCloudinary"
 
 type ContestantData = {
@@ -117,6 +117,39 @@ export function useAdmin() {
       loading.value = false
     }
   }
+	
+  // 🔹 Delete contestant
+  const deleteContestant = async (id: string) => {
+    loading.value = true
+    error.value = null
 
-  return { saveContestant, savePaymentMethod, loading, error }
+    try {
+      await deleteDoc(doc($db, "contestants", id))
+      // TODO: Optionally call backend to delete Cloudinary image
+      return { success: true }
+    } catch (err: any) {
+      error.value = err.message || "Failed to delete contestant"
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+	// 🔹 Delete payment method
+  const deletePaymentMethod = async (id: string) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      await deleteDoc(doc($db, "payment_methods", id))
+      // TODO: Optionally call backend to delete Cloudinary icon
+      return { success: true }
+    } catch (err: any) {
+      error.value = err.message || "Failed to delete payment method"
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { saveContestant, savePaymentMethod, deleteContestant, deletePaymentMethod, loading, error }
 }

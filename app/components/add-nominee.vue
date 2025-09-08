@@ -9,6 +9,8 @@ const props = defineProps<{
   nominee: any
 }>();
 
+const emit = defineEmits(['data-added']);
+
 const loadData = ref(false);
 const formdata:any = ref({
 	name: '',
@@ -36,7 +38,7 @@ async function addNominee() {
 	loadData.value = true;
 	const form = formdata.value;
 	try {
-		const result = await saveContestant({
+		const result:any = await saveContestant({
 			name: form.name,
 			category: form.category,
 			votes: 0,
@@ -44,17 +46,33 @@ async function addNominee() {
 		}, form.id || undefined);
 		console.log(result);
 		if ( !result.success ) {
-			// $swal?.fire({
-      //   title: 'Error!',
-      //   icon: 'warning',
-      //   text: result.error,
-      // });
+			$swal.fire({
+        title: 'Error!',
+        icon: 'warning',
+        text: result?.error,
+      });
+			return false;
 		}
+		emit('data-added');
 		closeModal('newNominee');
+		loadData.value = false;
+		formdata.value.name = '';
+		formdata.value.category = '';
+		$swal.fire({
+			title: 'Success!',
+			icon: 'success',
+			text: 'Nominee updated successfully!',
+		});
 	} catch (err:any) {
 		console.log(err)
 	}
 }
+
+
+// Fetch data on mount
+onMounted( () => {
+	
+});
 
 // async function castVote() {
 // 	loadData.value = true;
@@ -117,7 +135,7 @@ async function addNominee() {
 		<div class="modal fade" id="newNominee" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content text-light">
-					<div class="modal-header border-0 d-block" v-if="!nominee">
+					<div class="modal-header border-0 d-block">
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
@@ -128,6 +146,59 @@ async function addNominee() {
 									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 								</button>
 							</p> -->
+							<div class="row">
+								<div class="col-12 mb-3">
+									<label class="mb-1">Contestant fullname:</label>
+									<input type="text" placeholder="Enter fullname" v-model="formdata.name" class="form-control" required />
+									<small class="text-danger d-block mt-1" v-if="formerr?.name">{{ formerr?.name }}</small>
+								</div>
+								<div class="col-12 mb-3">
+									<label class="mb-1">Category:</label>
+									<input type="text" placeholder="Enter category" v-model="formdata.category" class="form-control" required />
+									<small class="text-danger d-block mt-1" v-if="formerr?.category">{{ formerr?.category }}</small>
+								</div>
+								<div class="col-12 mb-3 py-2">
+									<div class="d-flex mb-1">
+										<!-- <label>Proof of payment (optional):</label> -->
+										<button v-if="file" class="btn p-0 text-danger ms-auto" type="button" @click="file=null;preview=null">&times; clear</button>
+									</div>
+									<input type="file" accept="image/*" @change="handleFileChange" class="d-none" />
+									<div class="col-7 col-sm-5 mx-auto mb-2 rounded-circle p-2" :style="preview ? `background:linear-gradient(185deg, rgba(59, 29, 9, .5), rgb(218, 165, 32));` : `background-color: rgba(59, 29, 9, .5);`">
+										<div class="contest-img overflow-hidden border-0"
+											:style="preview ? 'background-image: url(' + preview + '); background-size: cover; background-position: center;' : 'background-color: rgba(59, 29, 9, .5);'">
+											<button type="button"
+												onclick="document.querySelector('input[type=file]')?.click()"
+												class="btn p-0 text-light w-100 h-100 rounded-circle overflow-hidden">
+												<!-- <img v-if="preview" :src="preview" class="w-100 m-0 p-0" /> -->
+												<div class="w-100 h-100 d-flex flex-column justify-content-center" style="background-color:rgba(255,255,255,0.1);" v-if="!preview">
+													<i class="bi bi-cloud-arrow-up pe-1 display-4 mx-auto"></i>
+													<span class="d-block mx-auto">{{ file ? 'Change photo' : 'Upload photo' }}</span>
+												</div>
+											</button>
+										</div>
+									</div>
+									<!-- <button type="button"
+										class="form-control my-1 text-start"
+										onclick="document.querySelector('input[type=file]')?.click()">
+										<i class="bi bi-cloud-arrow-up pe-1"></i>
+										<span>{{ file ? 'Change file' : 'Choose file' }}</span>
+									</button> -->
+								</div>
+							</div>
+							<p class="text-center mt-2">
+								<button :disabled="loadData" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
+									<i class="spinner-border spinner-border-sm" v-if="loadData"></i> Submit
+								</button>
+							</p>
+						</form>
+						<form @submit.prevent="addNominee" class="position-relative" v-else>
+							<h2 class="text-gold mb-4">Edit contestant</h2>
+							<p class="mb-4">
+								<!-- <button type="button" @click="activePage=null" class="btn p-0 border-0 bg-transparent text-light" aria-label="Close">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+								</button> -->
+							</p>
+							{{ formdata }}
 							<div class="row">
 								<div class="col-12 mb-3">
 									<label class="mb-1">Contestant fullname:</label>

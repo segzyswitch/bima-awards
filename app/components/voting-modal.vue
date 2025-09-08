@@ -227,7 +227,7 @@ async function castVote() {
 								</div>
 							</div>
 							<p class="text-center">
-								<button :disabled="loadData" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
+								<button :disabled="loadData||!selectedMethod" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
 									<i class="spinner-border spinner-border-sm" v-if="loadData"></i> Continue
 								</button>
 							</p>
