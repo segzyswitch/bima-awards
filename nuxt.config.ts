@@ -9,7 +9,7 @@ export default defineNuxtConfig({
     head: {
       title: 'Bima Awards',
       meta: [
-        { name: 'description', content: 'Bima Awards Application' }
+        { name: 'description', content: 'Bima Awards Online Voting' }
       ],
       // link: [
       //   { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }

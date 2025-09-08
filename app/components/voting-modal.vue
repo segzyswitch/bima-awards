@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useCloudinary } from '~/composables/useCloudinary';
-const { uploadProof } = useCloudinary();
+const { uploadImage } = useCloudinary();
 
 import { closeModal } from '~/utils/modal';
 // SweetAlert
@@ -49,10 +49,10 @@ function selectMethod(method:any) {
 	const text = method.tag;
   navigator.clipboard.writeText(text)
   .then(() => {
-    alert('Copied!');
+    console.log('Copied!');
   })
   .catch(() => {
-    alert('Failed to copy.');
+    console.log('Failed to copy.');
   });
 }
 const loadData = ref(false);
@@ -71,7 +71,7 @@ const handleFileChange = (e: Event) => {
   if (target.files && target.files.length > 0) {
     file.value = target.files[0];
     preview.value = URL.createObjectURL(file.value);
-		console.log(file.value);
+		// console.log(file.value);
   }
 };
 
@@ -91,7 +91,7 @@ async function castVote() {
 	// upload proof if available
   let proofUrl: string | null = null;
   if (file.value != null) {
-    proofUrl = await uploadProof(file.value);
+    proofUrl = await uploadImage(file.value);
   }
 	// prepare data
 	const voteData = {
@@ -117,7 +117,7 @@ async function castVote() {
 			$swal.fire({
         title: 'Thank You!',
         icon: 'success',
-        text: "Vote submitted, stay tuned we will send updates via email!",
+        text: "Your votes have been submitted! stay tuned, we will send you updates via email!",
       });
 		}else {
 			$swal.fire({
@@ -146,12 +146,15 @@ async function castVote() {
 						<form @submit.prevent="activePage='payment'" v-if="!activePage">
 							<h4 class="text-gold">Donate for this Nominee</h4>
 							<div class="col-7 col-sm-4 mx-auto py-2 mb-2 rounded-circle">
-								<div class="contest-img overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div>
+								<div class="contest-img overflow-hidden border-0 p-1"
+									style="background-color: rgba(59, 29, 9, .5);background:linear-gradient(185deg, rgba(59, 29, 9, .5), rgb(218, 165, 32));">
+									<div class="w-100 h-100 rounded-circle overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div>
+								</div>
 							</div>
 							<p class="text-light text-uppercase h4">{{ nominee.name }}</p>
 							<p class="text-gold mb-4">In Category: <span class="text-uppercase">{{ nominee.category }}</span></p>
 							<div class="w-100 rounded-3 border border-gold p-3 mb-4">
-								<h5>Select Donation Amount</h5>
+								<h5>Choose donation amount</h5>
 								<div class="row g-4 pt-3">
 									<div class="col-6" v-for="(rates, idx) in votePricing" :key="idx">
 										<button type="button" @click="makeVote(rates)" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': manualAmount==rates.price}">{{ rates.votes }} votes <br /> ${{rates.price}}</button>
@@ -184,42 +187,105 @@ async function castVote() {
 								<button :disabled="!donateTerms||manualAmount<1" style="scale:1.2;" type="submit" class="btn btn-warning px-4">Continue</button>
 							</p>
 						</form>
-						<form @submit.prevent="castVote" class="position-relative" v-if="activePage=='payment'">
-							<p class="text-start">
+						<form @submit.prevent="activePage='checkout'" class="position-relative" v-if="activePage=='payment'">
+							<p class="text-start mb-4">
 								<button type="button" @click="activePage=null" class="btn p-0 border-0 bg-transparent text-light" aria-label="Close">
 									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 								</button>
 							</p>
 							<h1 class="text-gold">Donate ${{ priceData?.price }} for {{ priceData?.votes }} points to vote:</h1>
-							<p class="text-light text-uppercase h5">{{ nominee.name }}</p>
+							<div class="text-light text-uppercase h4 py-2 d-flex mx-auto">
+								<div class="contest-img overflow-hidden ms-auto border-2">
+									<img :src="nominee.image" width="45" :alt="nominee.name" />
+								</div>
+								<div class="me-auto ps-2 my-auto">{{ nominee.name }}</div>
+							</div>
 							<p class="text-gold mb-4">In Category: <span class="text-uppercase">{{ nominee.category }}</span></p>
 							<div class="w-100 rounded-3 border border-gold p-3 mb-4 text-start">
 								<h5>Select payment method</h5>
-								<div class="row">
+								<div class="row ">
 									<div class="col-12 pt-3" v-for="(method, idx) in payment_methods" :key="idx">
-										<button type="button" @click="selectMethod(method)" class="btn border-gold bg-dark text-gold text-start w-100 d-flex"
+										<button type="button" @click="selectMethod(method)" class="btn border-gold bg-dark text-gold text-start w-100 d-flex py-2"
 											:class="{'bg-gold text-dark': selectedMethod?.name==method?.name}">
-											<img :src="method.icon" class="my-auto" :alt="method.name" height="35" />
-											<div class="ps-2">
+											<img :src="method?.icon" class="my-auto py-1" :alt="method?.name" width="45" />
+											<div class="ps-2 my-auto">
 												<p class="m-0">{{ method.name }}</p>
 												<small>{{ method.tag }}</small>
 											</div>
-											<span class="bi bi-copy ms-auto text-muted my-auto"></span>
+											<span class="ms-auto text-muted" v-if="selectedMethod?.name==method?.name">copied!</span>
+											<span class="bi bi-copy ms-auto text-muted" v-else></span>
 										</button>
 									</div>
 									<small class="text-danger d-block mt-1 mb-3" v-if="formerr?.payment_method">{{ formerr?.payment_method }}</small>
-									<div class="col-12 mb-4" :class="{'mt-4': !formerr?.payment_method}">
+									<p v-else-if="selectedMethod" class="d-block mt-3 mb-0" style="opacity:.7;">
+										<i class="bi bi-exclamation-circle text-gold me-1 h5"></i>
+										Complete the payment of ${{ priceData?.price }} via the selected payment method:<br />
+										<span class="text-white p-1 d-block pt-3"><img :src="selectedMethod?.icon" width="25" /> {{ selectedMethod?.name }}<br />
+											<span v-if="selectedMethod?.tag" class="py-2 px-3 rounded d-block my-2 w-100" style="background:#224a55;">{{ selectedMethod?.tag }}</span>
+										</span>
+									</p>
+								</div>
+							</div>
+							<p class="text-center">
+								<button :disabled="loadData" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
+									<i class="spinner-border spinner-border-sm" v-if="loadData"></i> Continue
+								</button>
+							</p>
+						</form>
+						<form @submit.prevent="castVote" class="position-relative" v-if="activePage=='checkout'">
+							<p class="text-start">
+								<button type="button" @click="activePage='payment'" class="btn p-0 border-0 bg-transparent text-light" aria-label="Close">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+								</button>
+							</p>
+							<h2 class="text-gold mb-4 my-1">Complete payment</h2>
+							<!-- <p class="text-light text-uppercase h5 py-2">{{ nominee.name }}</p>
+							<p class="text-gold mb-4">In Category: <span class="text-uppercase">{{ nominee.category }}</span></p> -->
+							<div class="w-100 rounded-3 border border-gold p-3 mb-4 text-start">
+								<div class="d-flex mb-3 p-2" style="border-bottom:1px dotted #cecece;">
+									<span>Nominee:</span>
+									<span class="ms-auto">{{ nominee?.name }}</span>
+								</div>
+								<div class="d-flex mb-3 p-2" style="border-bottom:1px dotted #cecece;">
+									<span>Category:</span>
+									<span class="ms-auto">{{ nominee?.category }}</span>
+								</div>
+								<div class="d-flex mb-3 p-2" style="border-bottom:1px dotted #cecece;">
+									<span>Votes:</span>
+									<span class="ms-auto">{{ priceData?.votes }}</span>
+								</div>
+								<div class="d-flex mb-3 p-2" style="border-bottom:1px dotted #cecece;">
+									<span>Price:</span>
+									<span class="ms-auto">${{ priceData?.price }}</span>
+								</div>
+								<div class="d-flex mb-3 p-2" style="border-bottom:1px dotted #cecece;">
+									<span class="my-auto">Method</span>
+									<span class="ms-auto my-auto"><img :src="selectedMethod?.icon" width="35" /> {{ selectedMethod?.name }} <small v-if="selectedMethod?.tag">({{ selectedMethod?.tag }})</small></span>
+								</div>
+								<div class="row pt-2">
+									<div class="col-12">
+										<div class="d-flex mb-1">
+											<label>Proof of payment (optional):</label>
+											<button v-if="file" class="btn p-0 text-danger ms-auto" type="button" @click="file=null;preview=null">&times; clear</button>
+										</div>
+										<input type="file" accept="image/*" @change="handleFileChange" class="d-none" />
+										<button type="button"
+											class="form-control my-1 p-3 py-4 position-relative"
+											onclick="document.querySelector('input[type=file]')?.click()"
+											:class="{'text-white': preview}">
+											<i class="bi bi-cloud-arrow-up pe-1 display-2 mb-3"></i>
+											<span class="d-block">{{ file ? 'Change file' : 'Choose file' }}</span>
+											<small class="d-block pt-2" style="opacity:.6;">{{ file ? file.name : 'Upload screenshot or reciept of your payment.' }}</small>
+											<img :src="preview??undefined"
+												v-if="preview"
+												style="position:absolute;opacity:.3;z-index:1;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;"
+											/>
+										</button>
+									</div>
+									<div class="col-12 mb-2" :class="{'mt-4': !formerr?.payment_method}">
 										<label class="mb-1">Email address:</label>
 										<input type="email" placeholder="Email address" v-model="formdata.email" class="form-control" required />
 										<small class="text-danger d-block mt-1" v-if="formerr?.email">{{ formerr?.email }}</small>
-									</div>
-									<div class="col-12 mb-2">
-										<label class="mb-1">Proof of payment (optional):</label>
-										<input type="file" accept="image/*" @change="handleFileChange" class="d-none" />
-										<button type="button" class="form-control text-start" onclick="document.querySelector('input[type=file]')?.click()">
-											<i class="bi bi-cloud-arrow-up pe-1"></i> {{ file ? file.name : 'Upload file' }}
-										</button>
-										<small class="d-block pt-2 text-start" style="opacity:.6;">Upload screenshot or photo of your payment.</small>
 									</div>
 								</div>
 							</div>

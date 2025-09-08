@@ -71,7 +71,11 @@ onMounted(async () => {
 					<button class="card border-0 p-1 shadow-sm" data-bs-toggle="modal" :data-bs-target="`#Modal_${nominee.id}`">
 						<div class="card-body bg-dark py-4">
 							<div class="col-9 col-sm-7 mx-auto py-3 rounded-circle mb-3">
-								<div class="contest-img overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div>
+								<!-- <div class="contest-img overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div> -->
+								<div class="contest-img overflow-hidden border-0 p-2"
+									style="background-color: rgba(59, 29, 9, .5);background:linear-gradient(185deg, rgba(59, 29, 9, .5), rgb(218, 165, 32));">
+									<div class="w-100 h-100 rounded-circle overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div>
+								</div>
 							</div>
 							<h6 class="card-title text-dark mb-3 text-uppercase ">
 								<span class="p-1 px-2 bg-gold rounded-3 d-inline-block">{{ nominee.name }}</span>
@@ -79,6 +83,10 @@ onMounted(async () => {
 							<p class="card-text lh-2 small text-uppercase mb-3">{{ nominee.category }}</p>
 							<small class="heading-small mb-2"><span>nominee</span></small>
 						</div>
+						<img src="~/assets/img/card-lines.png"
+							class="card-lines"
+							style="position:absolute;opacity:.25;z-index:1;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;"
+						/>
 					</button>
 					
 					<!-- Modal -->

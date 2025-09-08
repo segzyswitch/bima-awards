@@ -1,90 +1,87 @@
-<script setup lang="ts">
-import { collection, getDocs } from "firebase/firestore";
-const { $db } = useNuxtApp();
+<script lang="ts" setup>
+const { $swal } = useNuxtApp();
+const router = useRouter();
 
-const contestants = ref<any[]>([]);
-const payment_methods = ref<any[]>([]);
+import { useAdminAuth } from '~/composables/useAdminAuth';
+const { user, login } = useAdminAuth();
+// go to dashboard if already logged in
+if (user.value) router.push('/admin/dashboard');
 
-onMounted(async () => {
-	// fetch contestants
-  const constestSnapshot = await getDocs(collection($db, "contestants"));
-  contestants.value = constestSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-	// fetch payment methods
-	const paymentSnapshot = await getDocs(collection($db, "payment_methods"));
-	payment_methods.value = paymentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-	// console.log(payment_methods.value);
+const formdata:any = ref({
+	email: '',
+	password: ''
 });
+const loadData = ref(false);
+
+// Login admin
+async function loginAdmin() {
+	loadData.value = true;
+	// return console.log(formdata.value);
+	try {
+		const response = await login(formdata.value.email, formdata.value.password);
+		if (!response.success) {
+			$swal.fire({
+				icon: 'warning',
+				title: 'Login failed',
+				text: 'Incorrect credentials!',
+				confirmButtonText: 'OK',
+				confirmButtonColor: '#ffc107'
+			});
+			return false;
+		}
+		$swal.fire({
+			icon: 'success',
+			title: 'Login successful',
+			text: 'Welcome back, admin!',
+			confirmButtonText: 'OK',
+			confirmButtonColor: '#ffc107'
+		});
+		router.push('/admin/dashboard');
+	} catch (error:any) {
+		console.error('Login error:', error);
+		await $swal.fire({
+			icon: 'error',
+			title: 'Login failed',
+			text: error.message || 'An error occurred during login. Please try again.',
+			confirmButtonText: 'OK',
+			confirmButtonColor: '#dc3545'
+		});
+	} finally {
+		loadData.value = false;
+	}
+}
 </script>
 
 <template>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-		<div class="container-fluid">
-			<a class="navbar-brand" href="#">BIMAawards</a>
-			<!-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button> -->
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<!-- <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-					<li class="nav-item">
-						<a class="nav-link active" aria-current="page" href="#">Home</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">Link</a>
-					</li>
-					<li class="nav-item dropdown">
-						<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-							Dropdown
-						</a>
-						<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-							<li><a class="dropdown-item" href="#">Action</a></li>
-							<li><a class="dropdown-item" href="#">Another action</a></li>
-							<li><hr class="dropdown-divider"></li>
-							<li><a class="dropdown-item" href="#">Something else here</a></li>
-						</ul>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-					</li>
-				</ul> -->
-				<!-- <form class="d-flex">
-					<input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-					<button class="btn btn-outline-success" type="submit">Search</button>
-				</form> -->
-			</div>
-		</div>
-	</nav>
-	<header class="w-100 text-center py-4">
-		<div class="container py-5 text-white mb-0">
-			<h2 style="opacity:.7;">Category:</h2>
-			<h1 class="display-4 text-uppercase py-3 text-gold">Best influencer / Modeling Awards</h1>
-			<p class="lead">Select your favorite nominee below and click the image to cast your vote.</p>
-		</div>
-	</header>
+<div class="w-100 vh-100 d-flex">
+	<div class="container m-auto">
+		<div class="row">
+			<div class="col-sm-5 mx-auto">
+				<div class="w-100 text-light shadow-lg rounded-3 py-3" style="background-color:rgba(0, 0, 0, .4);">
+					<div class="card-body p-4">
+						<!-- img logo -->
+						<h5 class="card-title text-gold mb-4 text-center">Admin Login</h5>
 
-	<section class="w-100 py-5 contest">
-		<div class="container">
-			<div class="w-100 text-center py-5" v-if="!contestants.length">
-				<i class="spinner-border text-gold"></i>
-			</div>
-			<div class="row g-5" v-else>
-				<div v-for="(nominee, idx) in contestants" :key="idx" class="col-sm-4 text-center">
-					<button class="card border-0 p-1 shadow-sm" data-bs-toggle="modal" :data-bs-target="`#Modal_${nominee.id}`">
-						<div class="card-body bg-dark py-4">
-							<div class="col-9 col-sm-7 mx-auto py-3 rounded-circle mb-3">
-								<div class="contest-img overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div>
+						<form @submit.prevent="loginAdmin">
+							<div class="mb-3 text-start">
+								<label for="email" class="form-label">Email address</label>
+								<input type="email" class="form-control" id="email" v-model="formdata.email" required />
 							</div>
-							<h6 class="card-title text-dark mb-3 text-uppercase ">
-								<span class="p-1 px-2 bg-gold rounded-3 d-inline-block">{{ nominee.name }}</span>
-							</h6>
-							<p class="card-text lh-2 small text-uppercase mb-3">{{ nominee.category }}</p>
-							<small class="heading-small mb-2"><span>nominee</span></small>
-						</div>
-					</button>
-					
-					<!-- Modal -->
-					<votingModal :nominee="nominee" :payment_methods="payment_methods" />
+							<div class="mb-4 text-start">
+								<label for="password" class="form-label">Password</label>
+								<input type="password" class="form-control" id="password" v-model="formdata.password" required />
+							</div>
+							<p class="text-center m-0">
+								<button type="submit" class="btn btn-warning mx-auto" :disabled="loadData">
+									<i class="spinner-border spinner-border-sm me-2" v-if="loadData"></i>
+									<span>Login</span>
+								</button>
+							</p>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
-	</section>
+	</div>
+</div>
 </template>

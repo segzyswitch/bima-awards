@@ -1,5 +1,4 @@
-import { ref } from "vue"
-import { addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { addDoc, collection, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 
 type VoteData = {
   userEmail: string
@@ -9,10 +8,10 @@ type VoteData = {
   paymentMethod: string,
 	category: string,
   proofFile?: String | null
-}
+};
 
 export function useVotes() {
-  const { $db, $storage } = useNuxtApp()
+  const { $db } = useNuxtApp()
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -34,7 +33,13 @@ export function useVotes() {
       }
 
       // Save to Firestore
-      await addDoc(collection($db, "votes"), voteRecord)
+      await addDoc(collection($db, "votes"), voteRecord);
+
+      // 2. Increment contestant's vote count
+      const contestantRef = doc($db, "contestants", voteRecord.contestantId)
+      await updateDoc(contestantRef, {
+        votes: increment(voteRecord.votes),
+      });
 
       return { success: true }
     } catch (err: any) {
