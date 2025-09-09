@@ -10,7 +10,7 @@ const router = useRouter();
 const route = useRoute();
 
 // redirect to login if not logged in
-// if (!user.value) router.push('/admin');
+if (!user.value) router.push('/admin');
 
 // page route
 const slug = route.params.pages;
@@ -25,7 +25,6 @@ function selectNominee(nominee:any) {
 	
 	openModal('newNominee');
 }
-
 // delete data
 const { deleteContestant } = useAdmin();
 const removeNominee:any = ref(null);
@@ -56,6 +55,18 @@ async function resolveNominee(nominee:any) {
 	
 	// openModal('newNominee');
 }
+
+// Edit payment method
+const editMethod:any = ref(null);
+function selectMethod(method:any) {
+  // nomineeForm.value?.makeEdit();
+	if (method) {
+		editMethod.value = method;
+	}else editMethod.value = null;
+	// return console.log(method)
+	openModal('newPaymentMethod');
+}
+
 
 const Contestants = ref<any[]>([]);
 const paymentMethods = ref<any[]>([]);
@@ -103,13 +114,57 @@ async function loadAll() {
 
 	loadData.value = false;
 }
+
+function Logout() {
+	try {
+		const result:any = logout;
+		if ( !result.success ) {
+			$swal.fire({
+        title: 'Error!',
+        icon: 'warning',
+        text: result?.error,
+      });
+			loadData.value = false;
+			router.push('/admin');
+			return false;
+		}
+		loadData.value = false;
+		router.push('/admin');
+	} catch (err:any) {
+		$swal.fire({
+			title: 'Error!',
+			icon: 'warning',
+			text: err?.message??'An error occured, try again',
+		});
+		console.log(err);
+	}
+}
 // Fetch data on mount
 onMounted( () => {
 	loadAll();
+	
+  router.afterEach(() => {
+    const offcanvasEl = document.getElementById('mobileMenu');
+    const bootstrap = (window as any).bootstrap;
+    if (offcanvasEl && bootstrap?.Offcanvas) {
+      const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+      if (bsOffcanvas) bsOffcanvas.hide();
+    }
+  });
 });
 </script>
 
 <template>
+	<div class="offcanvas offcanvas-start w-75 bg-dark text-light" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+		<div class="offcanvas-header">
+			<h5 class="offcanvas-title" id="offcanvasExampleLabel">Bima Awards</h5>
+			<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+		</div>
+		<div class="offcanvas-body px-0">
+			<sidenav :logout="Logout" />
+		</div>
+	</div>
+
 	<div class="container-fluid pb-5">
 		<div class="row pb-4">
 			<div class="col-sm-3 ps-0 d-none d-sm-block">
@@ -117,35 +172,16 @@ onMounted( () => {
 					<h3 class="text-gold px-3 pt-3 mb-0">Bima Admin</h3>
 					<hr class="border-gold">
 					<div class="w-100 sidenav">
-						<ul class="nav flex-column">
-							<li class="nav-item mb-2">
-								<router-link to="/admin/dashboard" class="nav-link">Overview</router-link>
-							</li>
-							<li class="nav-item mb-2">
-								<router-link to="/admin/nominees" class="nav-link">Contestants</router-link>
-							</li>
-							<li class="nav-item mb-2">
-								<router-link to="/admin/votes" class="nav-link">Votes</router-link>
-							</li>
-							<li class="nav-item mb-2">
-								<router-link to="/admin/payments" class="nav-link">Payment Methods</router-link>
-							</li>
-							<li class="nav-item mb-2">
-								<router-link to="/admin/settings" class="nav-link">Settings</router-link>
-							</li>
-							<li class="nav-item mb-2">
-								<a href="#" @click.prevent="logout" class="nav-link">Logout</a>
-							</li>
-						</ul>
+						<sidenav :logout="logout" />
 					</div>
 				</div>
 			</div>
 			<div class="col-sm-9">
 				<div class="navbar navbar-expand-lg navbar-dark row mb-5">
 					<div class="container-fluid">
-						<!-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+						<button class="navbar-toggler ms-auto text-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Open menu">
 							<span class="navbar-toggler-icon"></span>
-						</button> -->
+						</button>
 						<div class="collapse navbar-collapse" id="navbarSupportedContent">
 							<ul class="navbar-nav ms-auto">
 								<li class="nav-item dropdown">
@@ -161,7 +197,7 @@ onMounted( () => {
 										</div>
 										<li><hr class="dropdown-divider text-light"></li>
 										<li><a class="dropdown-item" href="#">Settings</a></li>
-										<li><a class="dropdown-item" href="#">Logout</a></li>
+										<li><a class="dropdown-item" href="#" @click.prevent="Logout">Logout</a></li>
 									</ul>
 								</li>
 							</ul>
@@ -274,8 +310,9 @@ onMounted( () => {
 				<section class="w-100" v-if="slug=='payments'">
 					<div class="d-flex">
 						<h1 class="text-light mb-4">Payment methods</h1>
-						<button class="btn ms-auto btn-secondary my-auto">Add new</button>
+						<button class="btn ms-auto btn-secondary my-auto" @click="selectMethod(null)">Add new</button>
 					</div>
+					<payment-method :method="editMethod" :reload-data="loadAll" />
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
 					<table class="table text-light table-hover" v-else>
 						<thead>
@@ -292,7 +329,7 @@ onMounted( () => {
 								</td>
 								<td>{{ payment.tag }}</td>
 								<td>
-									<a href="#" class="btn p-1 text-primary">edit</a>
+									<a href="#" class="btn p-1 text-primary" @click="selectMethod(payment)">edit</a>
 									<a href="#" class="btn p-1 text-danger">delete</a>
 								</td>
 							</tr>
@@ -305,14 +342,6 @@ onMounted( () => {
 </template>
 
 <style scoped>
-.sidenav .nav-link {
-	color: #cecece;
-}
-.sidenav .router-link-exact-active {
-	color: goldenrod!important;
-	border-left: 3px solid goldenrod;
-}
-
 .dropdown-menu {
 	background-color: #404040;
 }
