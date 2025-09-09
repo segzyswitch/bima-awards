@@ -51,9 +51,37 @@ async function resolveNominee(nominee:any) {
 		} catch (err) {
 			console.log(err)
 		}
-	}else editNominee.value = null;
+	}else removeNominee.value = null;
 	
 	// openModal('newNominee');
+}
+
+const { deleteVote } = useAdmin();
+const removeVote:any = ref(null);
+async function resolveVote(vote:any) {
+	if (vote) {
+		removeVote.value = vote;
+		try {vote
+			const result = await deleteVote(vote.id);
+			if (!result.success) {
+				$swal.fire({
+					title: 'Sorry!',
+					icon: 'warning',
+					text: result?.error??'Unable to delete, try again',
+				});
+				return false;
+			}
+			$swal.fire({
+				title: 'Success!',
+				icon: 'success',
+				text: 'Vote item removed successfully!',
+			});
+			console.log(result);
+			loadAll();
+		} catch (err) {
+			console.log(err)
+		}
+	}else removeVote.value = null;
 }
 
 // Edit payment method
@@ -290,6 +318,7 @@ onMounted( () => {
 								<th scope="col">Amount</th>
 								<th scope="col">Payment method/proof</th>
 								<th scope="col">Date</th>
+								<th scope="col">Action</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -301,6 +330,9 @@ onMounted( () => {
 								<td>${{ vote.amountPaid }}</td>
 								<td>{{ vote.paymentMethod }} <a href="javascript:void(0)" @click.prevent="showProof(vote)" v-if="vote.proofFileName">Show reciept</a></td>
 								<td>{{ formatFirestoreTimestamp(vote.createdAt) }}</td>
+								<td>
+									<a href="javascript:void(0)" class="btn text-danger p-1" @click="resolveVote(vote)">delete</a>
+								</td>
 							</tr>
 						</tbody>
 					</table>

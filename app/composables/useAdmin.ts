@@ -150,6 +150,22 @@ export function useAdmin() {
       loading.value = false
     }
   }
+  // delete vote
+  const deleteVote = async (id: string) => {
+    loading.value = true
+    error.value = null
 
-  return { saveContestant, savePaymentMethod, deleteContestant, deletePaymentMethod, loading, error }
+    try {
+      await deleteDoc(doc($db, "votes", id))
+      // TODO: Optionally call backend to delete Cloudinary icon
+      return { success: true }
+    } catch (err: any) {
+      error.value = err.message || "Failed to delete payment method"
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { saveContestant, savePaymentMethod, deleteContestant, deletePaymentMethod, deleteVote, loading, error }
 }
