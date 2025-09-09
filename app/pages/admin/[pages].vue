@@ -223,7 +223,7 @@ onMounted( () => {
 							</router-link>
 						</div>
 						<div class="col-sm-6">
-							<router-link to="/admin/payments" class="btn w-100 h-100 btn-warning p-3 text-center">
+							<router-link to="/admin/votes" class="btn w-100 h-100 btn-warning p-3 text-center">
 								<p class="lead">Total votes</p>
 								<h1 class="display-2">{{ Votes.length }}</h1>
 							</router-link>
