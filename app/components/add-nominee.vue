@@ -6,7 +6,8 @@ const { $swal } = useNuxtApp();
 
 // Define props
 const props = defineProps<{
-  nominee: any
+  nominee: any,
+	reloadData: Function
 }>();
 
 const loadData = ref(false);
@@ -19,12 +20,6 @@ const formerr:any = ref({
 	category: '',
 });
 
-function makeEdit() {
-	if (props.nominee) formdata.value = props.nominee;
-	console.log("Make Edit")
-}
-defineExpose({ makeEdit });
-
 const file:any = ref<File | null>(null);
 const preview = ref<string | null>(null);
 const handleFileChange = (e: Event) => {
@@ -35,6 +30,17 @@ const handleFileChange = (e: Event) => {
 		// console.log(file.value);
   }
 };
+
+// watch prop
+watch(
+  () => props.nominee,
+  (newVal, oldVal) => {
+		formdata.value = newVal;
+		if (newVal != null) preview.value = newVal?.image;
+    console.log('prop changed from', oldVal, 'to', newVal);
+    // update something here
+  }
+)
 
 // Add nominee
 const { saveContestant, loading, error } = useAdmin();
@@ -55,9 +61,11 @@ async function addNominee() {
         icon: 'warning',
         text: result?.error,
       });
+			loadData.value = false;
 			return false;
 		}
 		// emit('data-added');
+		props.reloadData();
 		closeModal('newNominee');
 		loadData.value = false;
 		formdata.value.name = '';
@@ -151,17 +159,7 @@ onMounted( () => {
 								</button>
 							</p> -->
 							<div class="row">
-								<div class="col-12 mb-3">
-									<label class="mb-1">Contestant fullname:</label>
-									<input type="text" placeholder="Enter fullname" v-model="formdata.name" class="form-control" required />
-									<small class="text-danger d-block mt-1" v-if="formerr?.name">{{ formerr?.name }}</small>
-								</div>
-								<div class="col-12 mb-3">
-									<label class="mb-1">Category:</label>
-									<input type="text" placeholder="Enter category" v-model="formdata.category" class="form-control" required />
-									<small class="text-danger d-block mt-1" v-if="formerr?.category">{{ formerr?.category }}</small>
-								</div>
-								<div class="col-12 mb-3 py-2">
+								<div class="col-12 py-4">
 									<div class="d-flex mb-1">
 										<!-- <label>Proof of payment (optional):</label> -->
 										<button v-if="file" class="btn p-0 text-danger ms-auto" type="button" @click="file=null;preview=null">&times; clear</button>
@@ -187,6 +185,16 @@ onMounted( () => {
 										<i class="bi bi-cloud-arrow-up pe-1"></i>
 										<span>{{ file ? 'Change file' : 'Choose file' }}</span>
 									</button> -->
+								</div>
+								<div class="col-12 mb-3">
+									<label class="mb-1">Contestant fullname:</label>
+									<input type="text" placeholder="Enter fullname" v-model="formdata.name" class="form-control" required />
+									<small class="text-danger d-block mt-1" v-if="formerr?.name">{{ formerr?.name }}</small>
+								</div>
+								<div class="col-12 mb-4">
+									<label class="mb-1">Category:</label>
+									<input type="text" placeholder="Enter category" v-model="formdata.category" class="form-control" required />
+									<small class="text-danger d-block mt-1" v-if="formerr?.category">{{ formerr?.category }}</small>
 								</div>
 							</div>
 							<p class="text-center mt-2">
@@ -202,19 +210,8 @@ onMounted( () => {
 									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 								</button> -->
 							</p>
-							{{ formdata }}
 							<div class="row">
-								<div class="col-12 mb-3">
-									<label class="mb-1">Contestant fullname:</label>
-									<input type="text" placeholder="Enter fullname" v-model="formdata.name" class="form-control" required />
-									<small class="text-danger d-block mt-1" v-if="formerr?.name">{{ formerr?.name }}</small>
-								</div>
-								<div class="col-12 mb-3">
-									<label class="mb-1">Category:</label>
-									<input type="text" placeholder="Enter category" v-model="formdata.category" class="form-control" required />
-									<small class="text-danger d-block mt-1" v-if="formerr?.category">{{ formerr?.category }}</small>
-								</div>
-								<div class="col-12 mb-3 py-2">
+								<div class="col-12 py-3">
 									<div class="d-flex mb-1">
 										<!-- <label>Proof of payment (optional):</label> -->
 										<button v-if="file" class="btn p-0 text-danger ms-auto" type="button" @click="file=null;preview=null">&times; clear</button>
@@ -241,8 +238,18 @@ onMounted( () => {
 										<span>{{ file ? 'Change file' : 'Choose file' }}</span>
 									</button> -->
 								</div>
+								<div class="col-12 mb-3">
+									<label class="mb-1">Contestant fullname:</label>
+									<input type="text" placeholder="Enter fullname" v-model="formdata.name" class="form-control" required />
+									<small class="text-danger d-block mt-1" v-if="formerr?.name">{{ formerr?.name }}</small>
+								</div>
+								<div class="col-12 mb-4">
+									<label class="mb-1">Category:</label>
+									<input type="text" placeholder="Enter category" v-model="formdata.category" class="form-control" required />
+									<small class="text-danger d-block mt-1" v-if="formerr?.category">{{ formerr?.category }}</small>
+								</div>
 							</div>
-							<p class="text-center mt-2">
+							<p class="text-center mt-3">
 								<button :disabled="loadData" style="scale:1.2;" type="submit" class="btn btn-warning px-4">
 									<i class="spinner-border spinner-border-sm" v-if="loadData"></i> Submit
 								</button>

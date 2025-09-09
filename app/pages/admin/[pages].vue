@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { collection, getDocs, Timestamp, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, Timestamp, query, orderBy,  } from "firebase/firestore";
 import { useAdminAuth } from '~/composables/useAdminAuth';
 import { openModal } from "~/utils/modal";
+// SweetAlert
+const { $swal } = useNuxtApp();
 const { $db } = useNuxtApp();
 const { user, logout } = useAdminAuth();
 const router = useRouter();
 const route = useRoute();
-import addNominee from "~/components/add-nominee.vue";
-const nomineeForm = ref<InstanceType<typeof addNominee> | null>(null);
 
 // redirect to login if not logged in
 // if (!user.value) router.push('/admin');
@@ -15,15 +15,46 @@ const nomineeForm = ref<InstanceType<typeof addNominee> | null>(null);
 // page route
 const slug = route.params.pages;
 
-// Payment methods
+// Edit data
 const editNominee:any = ref(null);
 function selectNominee(nominee:any) {
-  nomineeForm.value?.makeEdit();
-	editNominee.value = {
-		name: nominee.name,
-		category: nominee.category
-	}
+  // nomineeForm.value?.makeEdit();
+	if (nominee) {
+		editNominee.value = nominee;
+	}else editNominee.value = null;
+	
 	openModal('newNominee');
+}
+
+// delete data
+const { deleteContestant } = useAdmin();
+const removeNominee:any = ref(null);
+async function resolveNominee(nominee:any) {
+	if (nominee) {
+		removeNominee.value = nominee;
+		try {
+			const result = await deleteContestant(nominee.id);
+			if (!result.success) {
+				$swal.fire({
+					title: 'Sorry!',
+					icon: 'warning',
+					text: result?.error??'Unable to delete, try again',
+				});
+				return false;
+			}
+			$swal.fire({
+				title: 'Success!',
+				icon: 'success',
+				text: 'Nominee removed successfully!',
+			});
+			console.log(result);
+			loadAll();
+		} catch (err) {
+			console.log(err)
+		}
+	}else editNominee.value = null;
+	
+	// openModal('newNominee');
 }
 
 const Contestants = ref<any[]>([]);
@@ -176,7 +207,7 @@ onMounted( () => {
 						<h1 class="text-light my-auto">All Nominees</h1>
 						<button @click="selectNominee(null)" class="btn ms-auto btn-secondary my-auto">Add new</button>
 					</div>
-					<add-nominee :nominee="editNominee" />
+					<add-nominee :nominee="editNominee" :reload-data="loadAll" />
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
 					<table class="table text-light" v-else>
 						<thead>
@@ -189,7 +220,7 @@ onMounted( () => {
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="(nom, idx) in Contestants" :key="idx" :ref="`constTr${nom.id}`">
+							<tr v-for="(nom, idx) in Contestants" :key="idx">
 								<th scope="row">{{ idx + 1 }}</th>
 								<td class="d-flex">
 									<div class="contest-img overflow-hidden border-0 p-1"
@@ -202,7 +233,7 @@ onMounted( () => {
 								<td>{{ nom.votes }}</td>
 								<td>
 									<a href="javascript:void(0)" class="btn text-primary p-1" @click="selectNominee(nom)">edit</a>
-									<a href="javascript:void(0)" class="btn text-danger p-1">delete</a>
+									<a href="javascript:void(0)" class="btn text-danger p-1" @click="resolveNominee(nom)">delete</a>
 								</td>
 							</tr>
 						</tbody>
