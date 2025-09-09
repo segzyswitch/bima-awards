@@ -115,6 +115,7 @@ async function loadAll() {
 	loadData.value = false;
 }
 
+// Logout
 function Logout() {
 	try {
 		const result:any = logout;
@@ -139,6 +140,15 @@ function Logout() {
 		console.log(err);
 	}
 }
+
+// View proof
+const openProof = ref(undefined);
+function showProof(vote:any) {
+	openProof.value = vote.proofFileName;
+	openModal('proofModal');
+}
+
+
 // Fetch data on mount
 onMounted( () => {
 	loadAll();
@@ -155,16 +165,6 @@ onMounted( () => {
 </script>
 
 <template>
-	<div class="offcanvas offcanvas-start w-75 bg-dark text-light" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
-		<div class="offcanvas-header">
-			<h5 class="offcanvas-title" id="offcanvasExampleLabel">Bima Awards</h5>
-			<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-		</div>
-		<div class="offcanvas-body px-0">
-			<sidenav :logout="Logout" />
-		</div>
-	</div>
-
 	<div class="container-fluid pb-5">
 		<div class="row pb-4">
 			<div class="col-sm-3 ps-0 d-none d-sm-block">
@@ -299,7 +299,7 @@ onMounted( () => {
 								<td><img :src="vote.image" width="25" /> <span class="ps-1">{{ getContestantById(vote.id)?.name??'...' }}</span></td>
 								<td>{{ vote.votes }}</td>
 								<td>${{ vote.amountPaid }}</td>
-								<td>{{ vote.paymentMethod }} <a :href="vote.proofFileName" @click.prevent v-if="vote.proofFileName">Show reciept</a></td>
+								<td>{{ vote.paymentMethod }} <a href="javascript:void(0)" @click.prevent="showProof(vote)" v-if="vote.proofFileName">Show reciept</a></td>
 								<td>{{ formatFirestoreTimestamp(vote.createdAt) }}</td>
 							</tr>
 						</tbody>
@@ -336,6 +336,31 @@ onMounted( () => {
 						</tbody>
 					</table>
 				</section>
+			</div>
+		</div>
+	</div>
+
+	
+	<!-- mobile menu -->
+	<div class="offcanvas offcanvas-start w-75 bg-dark text-light" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+		<div class="offcanvas-header">
+			<h5 class="offcanvas-title" id="offcanvasExampleLabel">Bima Awards</h5>
+			<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+		</div>
+		<div class="offcanvas-body px-0">
+			<sidenav :logout="Logout" />
+		</div>
+	</div>
+	
+	<div class="modal fade" id="proofModal" tabindex="-1">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content text-light">
+				<div class="modal-header border-0 d-block">
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body p-0">
+					<img :src="openProof" class="w-100" />
+				</div>
 			</div>
 		</div>
 	</div>
