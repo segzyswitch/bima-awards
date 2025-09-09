@@ -9,8 +9,6 @@ const props = defineProps<{
   nominee: any
 }>();
 
-const emit = defineEmits(['data-added']);
-
 const loadData = ref(false);
 const formdata:any = ref({
 	name: '',
@@ -20,6 +18,12 @@ const formerr:any = ref({
 	name: '',
 	category: '',
 });
+
+function makeEdit() {
+	if (props.nominee) formdata.value = props.nominee;
+	console.log("Make Edit")
+}
+defineExpose({ makeEdit });
 
 const file:any = ref<File | null>(null);
 const preview = ref<string | null>(null);
@@ -53,7 +57,7 @@ async function addNominee() {
       });
 			return false;
 		}
-		emit('data-added');
+		// emit('data-added');
 		closeModal('newNominee');
 		loadData.value = false;
 		formdata.value.name = '';

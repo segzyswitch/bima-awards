@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { collection, getDocs, Timestamp } from "firebase/firestore";
+import { collection, getDocs, Timestamp, query, orderBy } from "firebase/firestore";
 import { useAdminAuth } from '~/composables/useAdminAuth';
 import { openModal } from "~/utils/modal";
 const { $db } = useNuxtApp();
 const { user, logout } = useAdminAuth();
 const router = useRouter();
 const route = useRoute();
+import addNominee from "~/components/add-nominee.vue";
+const nomineeForm = ref<InstanceType<typeof addNominee> | null>(null);
 
 // redirect to login if not logged in
 // if (!user.value) router.push('/admin');
@@ -16,7 +18,11 @@ const slug = route.params.pages;
 // Payment methods
 const editNominee:any = ref(null);
 function selectNominee(nominee:any) {
-	editNominee.value = nominee;
+  nomineeForm.value?.makeEdit();
+	editNominee.value = {
+		name: nominee.name,
+		category: nominee.category
+	}
 	openModal('newNominee');
 }
 
@@ -51,13 +57,17 @@ const loadData = ref(true);
 
 async function loadAll() {
 	// fetch contestants
-	const constestSnapshot = await getDocs(collection($db, "contestants"));
+	const constestSnapshot = await getDocs(
+		query(collection($db, "contestants"), orderBy("createdAt", "desc"))
+	);
 	Contestants.value = constestSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 	// fetch payment methods
 	const paymentSnapshot = await getDocs(collection($db, "payment_methods"));
 	paymentMethods.value = paymentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 	// fetch votes
-	const votesSnapshot = await getDocs(collection($db, "votes"));
+	const votesSnapshot = await getDocs(
+		query(collection($db, "votes"), orderBy("createdAt", "desc"))
+	);
 	Votes.value = votesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
 	loadData.value = false;
@@ -166,7 +176,7 @@ onMounted( () => {
 						<h1 class="text-light my-auto">All Nominees</h1>
 						<button @click="selectNominee(null)" class="btn ms-auto btn-secondary my-auto">Add new</button>
 					</div>
-					<add-nominee :nominee="editNominee" @data-added="loadAll()" />
+					<add-nominee :nominee="editNominee" />
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
 					<table class="table text-light" v-else>
 						<thead>
