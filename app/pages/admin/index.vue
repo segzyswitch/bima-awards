@@ -60,7 +60,9 @@ async function loginAdmin() {
 				<div class="w-100 text-light shadow-lg rounded-3 py-3" style="background-color:rgba(0, 0, 0, .4);">
 					<div class="card-body p-4">
 						<!-- img logo -->
-						<h5 class="card-title text-gold mb-4 text-center">Admin Login</h5>
+						<a class="d-flex mb-5 navbar-brand"><PageLogo class="m-auto" /></a>
+
+						<h5 class="card-title text-gold mb-4 text-center">Sign in to your admin dashboard</h5>
 
 						<form @submit.prevent="loginAdmin">
 							<div class="mb-3 text-start">

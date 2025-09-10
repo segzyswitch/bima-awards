@@ -17,9 +17,9 @@ onMounted(async () => {
 </script>
 
 <template>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top" style="height:60px;">
 		<div class="container-fluid">
-			<a class="navbar-brand" href="#">BIMAawards</a>
+			<a class="navbar-brand d-inline-block" href="#" style="position:relative;top:20px;padding:5px 0;"><PageLogo /></a>
 			<!-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button> -->
@@ -53,6 +53,7 @@ onMounted(async () => {
 			</div>
 		</div>
 	</nav>
+
 	<header class="w-100 text-center py-4">
 		<div class="container py-5 text-white mb-0">
 			<h2 style="opacity:.7;">Category:</h2>

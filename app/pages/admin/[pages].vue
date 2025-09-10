@@ -197,16 +197,17 @@ onMounted( () => {
 		<div class="row pb-4">
 			<div class="col-sm-3 ps-0 d-none d-sm-block">
 				<div class="bg-dark vh-100 text-light position-fixed start-0 top-0 col-3 p-0">
-					<h3 class="text-gold px-3 pt-3 mb-0">Bima Admin</h3>
-					<hr class="border-gold">
-					<div class="w-100 sidenav">
+				<a class="navbar-brand d-inline-block m-2 mb-3" href="#" style="position:relative;top:20px;padding:5px 0;"><PageLogo /></a>
+
+					<div class="w-100 sidenav pt-5">
 						<sidenav :logout="logout" />
 					</div>
 				</div>
 			</div>
 			<div class="col-sm-9">
-				<div class="navbar navbar-expand-lg navbar-dark row mb-5">
+				<div class="navbar navbar-expand-lg navbar-dark row mb-5 sticky-top bg-dark" style="height:60px;">
 					<div class="container-fluid">
+						<a class="navbar-brand d-inline-block" href="#" style="position:relative;top:20px;padding:5px 0;"><PageLogo /></a>
 						<button class="navbar-toggler ms-auto text-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Open menu">
 							<span class="navbar-toggler-icon"></span>
 						</button>
@@ -232,6 +233,9 @@ onMounted( () => {
 						</div>
 					</div>
 				</div>
+
+				<!-- mobile top space -->
+				<div class="d-sm-none py-4"></div>
 
 				<!-- Dashboard -->
 				<section class="w-100" v-if="slug=='dashboard'">
@@ -273,69 +277,73 @@ onMounted( () => {
 					</div>
 					<add-nominee :nominee="editNominee" :reload-data="loadAll" />
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
-					<table class="table text-light" v-else>
-						<thead>
-							<tr>
-								<th scope="col">#</th>
-								<th scope="col">Name</th>
-								<th scope="col">Category</th>
-								<th scope="col">Votes</th>
-								<th scope="col">Options</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="(nom, idx) in Contestants" :key="idx">
-								<th scope="row">{{ idx + 1 }}</th>
-								<td class="d-flex">
-									<div class="contest-img overflow-hidden border-0 p-1"
-										style="width:50px;height:50px;background-color: rgba(59, 29, 9, .5);background:linear-gradient(185deg, rgba(59, 29, 9, .5), rgb(218, 165, 32));">
-										<div class="w-100 h-100 rounded-circle overflow-hidden"><img :src="nom.image" class="w-100" :alt="nom.name" /></div>
-									</div>
-									<span class="ps-2 my-auto">{{ nom.name }}</span>
-								</td>
-								<td>{{ nom.category }}</td>
-								<td>{{ nom.votes }}</td>
-								<td>
-									<a href="javascript:void(0)" class="btn text-primary p-1" @click="selectNominee(nom)">edit</a>
-									<a href="javascript:void(0)" class="btn text-danger p-1" @click="resolveNominee(nom)">delete</a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<div class="table-responsive" v-else>
+						<table class="table text-light">
+							<thead>
+								<tr>
+									<th scope="col">#</th>
+									<th scope="col">Name</th>
+									<th scope="col">Category</th>
+									<th scope="col">Votes</th>
+									<th scope="col">Options</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="(nom, idx) in Contestants" :key="idx">
+									<th scope="row">{{ idx + 1 }}</th>
+									<td class="d-flex">
+										<div class="contest-img overflow-hidden border-0 p-1"
+											style="width:50px;height:50px;background-color: rgba(59, 29, 9, .5);background:linear-gradient(185deg, rgba(59, 29, 9, .5), rgb(218, 165, 32));">
+											<div class="w-100 h-100 rounded-circle overflow-hidden"><img :src="nom.image" class="w-100" :alt="nom.name" /></div>
+										</div>
+										<span class="ps-2 my-auto">{{ nom.name }}</span>
+									</td>
+									<td>{{ nom.category }}</td>
+									<td>{{ nom.votes }}</td>
+									<td>
+										<a href="javascript:void(0)" class="btn text-primary p-1" @click="selectNominee(nom)">edit</a>
+										<a href="javascript:void(0)" class="btn text-danger p-1" @click="resolveNominee(nom)">delete</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</section>
 
 				<!-- Votes -->
 				<section class="w-100" v-if="slug=='votes'">
 					<h1 class="text-light mb-4">All Votes</h1>
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
-					<table class="table text-light table-hover" v-else>
-						<thead>
-							<tr>
-								<th scope="col">#</th>
-								<th scope="col">Voter's email</th>
-								<th scope="col">Nominee</th>
-								<th scope="col">Votes</th>
-								<th scope="col">Amount</th>
-								<th scope="col">Payment method/proof</th>
-								<th scope="col">Date</th>
-								<th scope="col">Action</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="(vote, idx) in Votes" :key="idx" class="text-light">
-								<th scope="row">{{ idx + 1 }}</th>
-								<td>{{ vote.userEmail }}</td>
-								<td><img :src="vote.image" width="25" /> <span class="ps-1">{{ getContestantById(vote.id)?.name??'...' }}</span></td>
-								<td>{{ vote.votes }}</td>
-								<td>${{ vote.amountPaid }}</td>
-								<td>{{ vote.paymentMethod }} <a href="javascript:void(0)" @click.prevent="showProof(vote)" v-if="vote.proofFileName">Show reciept</a></td>
-								<td>{{ formatFirestoreTimestamp(vote.createdAt) }}</td>
-								<td>
-									<a href="javascript:void(0)" class="btn text-danger p-1" @click="resolveVote(vote)">delete</a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<div class="table-responsive" v-else>
+						<table class="table text-light table-hover">
+							<thead>
+								<tr>
+									<th scope="col">#</th>
+									<th scope="col">Voter's email</th>
+									<th scope="col">Nominee</th>
+									<th scope="col">Votes</th>
+									<th scope="col">Amount</th>
+									<th scope="col">Payment method/proof</th>
+									<th scope="col">Date</th>
+									<th scope="col">Action</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="(vote, idx) in Votes" :key="idx" class="text-light">
+									<th scope="row">{{ idx + 1 }}</th>
+									<td>{{ vote.userEmail }}</td>
+									<td><img :src="vote.image" width="25" /> <span class="ps-1">{{ getContestantById(vote.id)?.name??'...' }}</span></td>
+									<td>{{ vote.votes }}</td>
+									<td>${{ vote.amountPaid }}</td>
+									<td>{{ vote.paymentMethod }} <a href="javascript:void(0)" @click.prevent="showProof(vote)" v-if="vote.proofFileName">Show reciept</a></td>
+									<td>{{ formatFirestoreTimestamp(vote.createdAt) }}</td>
+									<td>
+										<a href="javascript:void(0)" class="btn text-danger p-1" @click="resolveVote(vote)">delete</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</section>
 
 				<!-- Payment Methods -->
@@ -346,27 +354,29 @@ onMounted( () => {
 					</div>
 					<payment-method :method="editMethod" :reload-data="loadAll" />
 					<p class="text-center py-5" v-if="loadData"><i class="spinner-border text-light"></i></p>
-					<table class="table text-light table-hover" v-else>
-						<thead>
-							<tr>
-								<th>Payment method</th>
-								<th colspan="2">Tag</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="(payment, idx) in paymentMethods" :key="idx" class="text-light">
-								<td>
-									<img :src="payment.icon" :alt="payment.name" width="45">
-									<span class="ps-3">{{ payment.name }}</span>
-								</td>
-								<td>{{ payment.tag }}</td>
-								<td>
-									<a href="#" class="btn p-1 text-primary" @click="selectMethod(payment)">edit</a>
-									<a href="#" class="btn p-1 text-danger">delete</a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<div class="table-responsive" v-else>
+						<table class="table text-light table-hover">
+							<thead>
+								<tr>
+									<th>Payment method</th>
+									<th colspan="2">Tag</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="(payment, idx) in paymentMethods" :key="idx" class="text-light">
+									<td>
+										<img :src="payment.icon" :alt="payment.name" width="45">
+										<span class="ps-3">{{ payment.name }}</span>
+									</td>
+									<td>{{ payment.tag }}</td>
+									<td>
+										<a href="#" class="btn p-1 text-primary" @click="selectMethod(payment)">edit</a>
+										<a href="#" class="btn p-1 text-danger">delete</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</section>
 			</div>
 		</div>
