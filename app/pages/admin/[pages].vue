@@ -5,7 +5,7 @@ import { openModal } from "~/utils/modal";
 // SweetAlert
 const { $swal } = useNuxtApp();
 const { $db } = useNuxtApp();
-const { user, logout } = useAdminAuth();
+const { user, logout, changeEmail, changePassword, loading, error } = useAdminAuth();
 const router = useRouter();
 const route = useRoute();
 
@@ -61,7 +61,7 @@ const removeVote:any = ref(null);
 async function resolveVote(vote:any) {
 	if (vote) {
 		removeVote.value = vote;
-		try {vote
+		try {
 			const result = await deleteVote(vote.id);
 			if (!result.success) {
 				$swal.fire({
@@ -75,6 +75,34 @@ async function resolveVote(vote:any) {
 				title: 'Success!',
 				icon: 'success',
 				text: 'Vote item removed successfully!',
+			});
+			console.log(result);
+			loadAll();
+		} catch (err) {
+			console.log(err)
+		}
+	}else removeVote.value = null;
+}
+
+const { deletePaymentMethod } = useAdmin();
+const removePaymentMethod:any = ref(null);
+async function resolvePaymentMethod(payment:any) {
+	if (payment) {
+		removePaymentMethod.value = payment;
+		try {
+			const result = await deletePaymentMethod(payment.id);
+			if (!result.success) {
+				$swal.fire({
+					title: 'Sorry!',
+					icon: 'warning',
+					text: result?.error??'Unable to delete, try again',
+				});
+				return false;
+			}
+			$swal.fire({
+				title: 'Success!',
+				icon: 'success',
+				text: 'Payment method removed successfully!',
 			});
 			console.log(result);
 			loadAll();
@@ -176,6 +204,97 @@ function showProof(vote:any) {
 	openModal('proofModal');
 }
 
+// Settings
+const settingsTab:any = ref(null);
+// changeEmail
+const loadEmail = ref(false);
+const mailFD = ref({
+	email: '',
+	password: ''
+});
+async function changeAdminEmail() {
+	loadEmail.value = true;
+	const FD = mailFD.value;
+	try {
+		const result:any = await changeEmail(FD.email, FD.password);
+		if ( result.success == false ) {
+			loadEmail.value = false;
+			$swal.fire({
+        title: 'Sorry!',
+        icon: 'warning',
+        text: result?.error??"Operation failed, please try again",
+      });
+		}
+		loadEmail.value = false;
+		FD.email = '';
+		FD.password = '';
+		$swal.fire({
+			title: 'Thank You!',
+			icon: 'success',
+			text: "Admin email successfully changed!",
+		});
+		console.log(result)
+	} catch (err) {
+		console.log(err);
+			loadEmail.value = false;
+			$swal.fire({
+        title: 'Sorry!',
+        icon: 'error',
+        text: "Operation failed, please try again",
+      });
+	}
+}
+
+// changeEmail
+const loadPass = ref(false);
+const passFD = ref({
+	password: '',
+	new_password: '',
+	con_password: ''
+});
+async function changeAdminPassword() {
+	const FD = passFD.value;
+	if ( FD.new_password !== FD.con_password ) {
+		$swal.fire({
+			title: 'Sorry!',
+			icon: 'warning',
+			text: "New passwords do not match!",
+		});
+		return false;
+	}
+	loadEmail.value = true;
+	try {
+		const result:any = await changePassword(FD.new_password, FD.password);
+		if ( result.success == false ) {
+			loadEmail.value = false;
+			$swal.fire({
+        title: 'Sorry!',
+        icon: 'warning',
+        text: result?.error??"Operation failed, please try again",
+      });
+			return false;
+		}
+		loadEmail.value = false;
+		FD.password = '';
+		FD.new_password = '';
+		FD.con_password = '';
+		$swal.fire({
+			title: 'Thank You!',
+			icon: 'success',
+			text: "Admin password successfully changed!",
+		});
+		console.log(result)
+	} catch (err) {
+		console.log(err);
+			loadEmail.value = false;
+			$swal.fire({
+        title: 'Sorry!',
+        icon: 'error',
+        text: "Operation failed, please try again",
+      });
+	}
+}
+
 
 // Fetch data on mount
 onMounted( () => {
@@ -200,14 +319,14 @@ onMounted( () => {
 				<a class="navbar-brand d-inline-block m-2 mb-3" href="#" style="position:relative;top:20px;padding:5px 0;"><PageLogo /></a>
 
 					<div class="w-100 sidenav pt-5">
-						<sidenav :logout="logout" />
+						<sidenav :Logout="Logout" />
 					</div>
 				</div>
 			</div>
 			<div class="col-sm-9">
 				<div class="navbar navbar-expand-lg navbar-dark row mb-5 sticky-top bg-dark" style="height:60px;">
 					<div class="container-fluid">
-						<a class="navbar-brand d-inline-block" href="#" style="position:relative;top:20px;padding:5px 0;"><PageLogo /></a>
+						<a class="navbar-brand d-inline-block d-sm-none" href="#" style="position:relative;top:20px;padding:5px 0;"><PageLogo /></a>
 						<button class="navbar-toggler ms-auto text-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Open menu">
 							<span class="navbar-toggler-icon"></span>
 						</button>
@@ -371,11 +490,69 @@ onMounted( () => {
 									<td>{{ payment.tag }}</td>
 									<td>
 										<a href="#" class="btn p-1 text-primary" @click="selectMethod(payment)">edit</a>
-										<a href="#" class="btn p-1 text-danger">delete</a>
+										<a href="#" class="btn p-1 text-danger" @click.prevent="resolvePaymentMethod(payment)">delete</a>
 									</td>
 								</tr>
 							</tbody>
 						</table>
+					</div>
+				</section>
+
+				<!-- Settings -->
+				<section class="w-100" v-if="slug=='settings'">
+					<h1 class="text-light mb-4">Settings</h1>
+					<div class="row">
+						<div class="col-sm-5 pb-4">
+							<div class="w-100 rounded-3 p-3 shadow" style="background-color:rgba(255,255,255,.1);">
+								<h1 class="mb-4 text-center text-muted" style="font-size:5em;"><i class="bi bi-person-circle"></i></h1>
+								<div class="row my-tabs g-3">
+									<div class="col-6 col-sm-12">
+										<a href="#passwordTab" @click.prevent="settingsTab=null" class="btn border border-gold w-100" :class="{'active': !settingsTab}">Password</a>
+									</div>
+									<div class="col-6 col-sm-12">
+										<a href="#emailTab" @click.prevent="settingsTab='email'" class="btn border border-gold w-100" :class="{'active': settingsTab=='email'}">Email</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-7">
+							<form id="passwordTab" v-if="!settingsTab" @submit.prevent="changeAdminPassword" class="w-100 rounded-3 p-3 shadow text-light" style="background-color:rgba(255,255,255,.1);">
+								<h4 class="mb-4">Change password</h4>
+								<div class="w-100 mb-3">
+									<label class="mb-1">New password:</label>
+									<input type="text" placeholder="Enter new password" v-model="passFD.new_password" class="form-control" required />
+								</div>
+								<div class="w-100 mb-3">
+									<label class="mb-1">Confirm password:</label>
+									<input type="text" placeholder="Retype new password" v-model="passFD.con_password" class="form-control" required />
+								</div>
+								<div class="w-100 mb-3">
+									<label class="mb-1">Old password:</label>
+									<input type="password" placeholder="Confirm old password" v-model="passFD.password" class="form-control" required />
+								</div>
+								<p class="ps-2 mb-0 pt-3">
+									<button :disabled="loadEmail" style="scale:1.1;" type="submit" class="btn btn-warning px-4">
+										<i class="spinner-border spinner-border-sm" v-if="loadEmail"></i> Change password
+									</button>
+								</p>
+							</form>
+							<form id="emailTab" v-else @submit.prevent="changeAdminEmail" class="w-100 rounded-3 p-3 shadow text-light" style="background-color:rgba(255,255,255,.1);">
+								<h4 class="mb-4">Change Email</h4>
+								<div class="w-100 mb-3">
+									<label class="mb-1">New email address:</label>
+									<input type="email" placeholder="Email address address" v-model="mailFD.email" class="form-control" required />
+								</div>
+								<div class="w-100 mb-3">
+									<label class="mb-1">Enter password:</label>
+									<input type="password" placeholder="Email password" v-model="mailFD.password" class="form-control" required />
+								</div>
+								<p class="ps-2 mb-0 pt-3">
+									<button :disabled="loadEmail" style="scale:1.1;" type="submit" class="btn btn-warning px-4">
+										<i class="spinner-border spinner-border-sm" v-if="loadEmail"></i> Change email
+									</button>
+								</p>
+							</form>
+						</div>
 					</div>
 				</section>
 			</div>
@@ -390,7 +567,7 @@ onMounted( () => {
 			<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 		</div>
 		<div class="offcanvas-body px-0">
-			<sidenav :logout="Logout" />
+			<sidenav :Logout="Logout" />
 		</div>
 	</div>
 	

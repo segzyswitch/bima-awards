@@ -13,11 +13,13 @@ const props = defineProps<{
 }>();
 
 const votePricing = [
-	{ votes: 25, price: 10 },
-	{ votes: 75, price: 30 },
-	{ votes: 125, price: 50 },
-	{ votes: 225, price: 90 },
-	{ votes: 500, price: 200 },
+	{ votes: 5, price: 25 },
+	{ votes: 15, price: 50 },
+	{ votes: 25, price: 75 },
+	{ votes: 35, price: 100 },
+	{ votes: 55, price: 150 },
+	{ votes: 75, price: 200 },
+	{ votes: 120, price: 300 }
 ];
 
 const activePage:any = ref(null);
@@ -27,7 +29,7 @@ const donateTerms = ref(false);
 const priceData = computed((): { votes: number; price: number } => {
   return {
     price: (manualAmount.value ?? 0),
-		votes: (manualAmount.value ?? 0) * 2.5
+		votes: (manualAmount.value ?? 0) / 2.5
   }
 });
 const payAuto = ref(true);
@@ -160,7 +162,7 @@ async function castVote() {
 										<button type="button" @click="makeVote(rates)" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': manualAmount==rates.price}">{{ rates.votes }} votes <br /> ${{rates.price}}</button>
 									</div>
 									<div class="col-6">
-										<button type="button" @click="makeVote('manual')" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': !payAuto}">Custom amount <br /> above $200</button>
+										<button type="button" @click="makeVote('manual')" class="btn border-gold bg-dark text-gold w-100" :class="{'bg-gold text-dark': !payAuto}">Custom amount <br /> above $300</button>
 									</div>
 									<div class="col-12 position-relative" v-if="!payAuto">
 										<span class="position-absolute d-inline-block" style="top:5px;left:17.5px;">
@@ -259,8 +261,8 @@ async function castVote() {
 									<span class="ms-auto">${{ priceData?.price }}</span>
 								</div>
 								<div class="d-flex mb-3 p-2" style="border-bottom:1px dotted #cecece;">
-									<span class="my-auto">Method</span>
-									<span class="ms-auto my-auto"><img :src="selectedMethod?.icon" width="35" /> {{ selectedMethod?.name }} <small v-if="selectedMethod?.tag">({{ selectedMethod?.tag }})</small></span>
+									<span class="my-auto">Method:</span>
+									<span class="ms-auto my-auto text-end" style="max-width:75%;"><img :src="selectedMethod?.icon" width="35" /> {{ selectedMethod?.name }} <small v-if="selectedMethod?.tag">({{ selectedMethod?.tag }})</small></span>
 								</div>
 								<div class="row pt-2">
 									<div class="col-12">

@@ -62,7 +62,7 @@ async function loginAdmin() {
 						<!-- img logo -->
 						<a class="d-flex mb-5 navbar-brand"><PageLogo class="m-auto" /></a>
 
-						<h5 class="card-title text-gold mb-4 text-center">Sign in to your admin dashboard</h5>
+						<h5 class="card-title text-gold mb-4 text-center">Sign in to admin dashboard</h5>
 
 						<form @submit.prevent="loginAdmin">
 							<div class="mb-3 text-start">

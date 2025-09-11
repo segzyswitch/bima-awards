@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // Define props
 const props = defineProps<{
-  logout: any,
+  Logout: any,
 }>();
 </script>
 
@@ -20,10 +20,10 @@ const props = defineProps<{
 			<router-link to="/admin/payments" class="nav-link">Payment Methods</router-link>
 		</li>
 		<li class="nav-item mb-2">
-			<a to="#" class="nav-link">Settings</a>
+			<router-link to="/admin/settings" class="nav-link">Settings</router-link>
 		</li>
 		<li class="nav-item mb-2">
-			<a href="#" @click.prevent="logout" class="nav-link">Logout</a>
+			<a href="#" @click.prevent="Logout" class="nav-link">Logout</a>
 		</li>
 	</ul>
 </template>

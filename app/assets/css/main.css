@@ -133,6 +133,15 @@ header::after {
 	
 }
 
+/* tabs */
+.my-tabs .btn {
+	color: goldenrod;
+}
+.my-tabs .btn.active {
+	background-color: goldenrod;
+	color: #010101;
+}
+
 /* SWAL */
 .swal2-confirm-button {
   background-color: goldenrod!important;
