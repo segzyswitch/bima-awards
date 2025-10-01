@@ -198,9 +198,9 @@ function Logout() {
 }
 
 // View proof
-const openProof = ref(undefined);
+const openProofs = ref(undefined);
 function showProof(vote:any) {
-	openProof.value = vote.proofFileName;
+	openProofs.value = vote.proofFileName;
 	openModal('proofModal');
 }
 
@@ -577,8 +577,8 @@ onMounted( () => {
 				<div class="modal-header border-0 d-block">
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
-				<div class="modal-body p-0">
-					<img :src="openProof" class="w-100" />
+				<div class="modal-body d-flex flex-column gap-3">
+					<img v-for="img in openProofs" :src="img" class="w-100 border rounded mb-3" />
 				</div>
 			</div>
 		</div>
