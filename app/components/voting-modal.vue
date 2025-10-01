@@ -13,12 +13,12 @@ const props = defineProps<{
 }>();
 
 const votePricing = [
-	{ votes: 5, price: 25 },
-	{ votes: 15, price: 50 },
-	{ votes: 25, price: 75 },
-	{ votes: 35, price: 100 },
-	{ votes: 55, price: 150 },
-	{ votes: 75, price: 200 },
+	{ votes: 10, price: 25 },
+	{ votes: 20, price: 50 },
+	{ votes: 30, price: 75 },
+	{ votes: 40, price: 100 },
+	{ votes: 60, price: 150 },
+	{ votes: 80, price: 200 },
 	{ votes: 120, price: 300 }
 ];
 
@@ -47,6 +47,7 @@ function makeVote(query: { votes: number; price: number } | 'manual') {
 const selectedMethod:any = ref(null);
 function selectMethod(method:any) {
 	selectedMethod.value = method;
+	if ( !method ) return false;
 	// copy to clipboard
 	const text = method.tag;
   navigator.clipboard.writeText(text)
@@ -66,16 +67,24 @@ const formerr:any = ref({
 	payment_method: '',
 });
 
-const file:any = ref<File | null>(null);
-const preview = ref<string | null>(null);
+const files = ref<File[]>([]);
+const previews:any = ref([]);
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    file.value = target.files[0];
-    preview.value = URL.createObjectURL(file.value);
-		// console.log(file.value);
+    const newFiles = Array.from(target.files);
+    // append instead of replace
+    files.value = [...files.value, ...newFiles];
+    previews.value = [...previews.value, ...newFiles.map((f) => URL.createObjectURL(f))];
   }
 };
+const removeFile = (index: number) => {
+  // revoke object URL to avoid memory leaks
+  URL.revokeObjectURL(previews.value[index]);
+  files.value.splice(index, 1);
+  previews.value.splice(index, 1);
+};
+
 
 // Send votes
 import { useVotes } from '~/composables/useVotes';
@@ -90,11 +99,15 @@ async function castVote() {
 		return;
 	}
 
-	// upload proof if available
-  let proofUrl: string | null = null;
-  if (file.value != null) {
-    proofUrl = await uploadImage(file.value);
-  }
+	// upload proofs if available
+let proofUrls:any = [];
+if (files.value.length > 0) {
+  proofUrls = await Promise.all(
+    files.value.map((f) => uploadImage(f)) // call your uploadImage for each file
+  );
+  // filter out any failed uploads (nulls)
+  proofUrls = proofUrls.filter((url: any): url is string => url !== null);
+}
 	// prepare data
 	const voteData = {
 		userEmail: formdata.value.email,
@@ -103,7 +116,7 @@ async function castVote() {
 		amountPaid: priceData.value?.price || 0,
 		paymentMethod: selectedMethod.value?.name || '',
 		category: props.nominee.category || '',
-		proofFile: proofUrl,
+		proofFile: proofUrls,
 	};
 	// return console.log(voteData);
 	submitVote(voteData).then((resp:any) => {
@@ -132,6 +145,27 @@ async function castVote() {
 		loadData.value = false;
 		console.log(err);
 	});
+}
+
+async function Pay() {
+	try {
+		const res:any = await $fetch('/api/checkout', {
+			method: 'POST',
+			body: {
+				productName: 'Voting Ticket',
+				amount: 5,
+				origin: window.location.origin,
+			},
+		})
+
+		if (res.url) {
+			window.location.href = res.url // Redirect to Stripe Checkout
+		} else {
+			alert(res.error)
+		}
+	} catch (err:any) {
+		console.log(err)	
+	}
 }
 
 </script>
@@ -210,7 +244,7 @@ async function castVote() {
 										<button type="button" @click="selectMethod(method)" class="btn border-gold bg-dark text-gold text-start w-100 d-flex py-2"
 											:class="{'bg-gold text-dark': selectedMethod?.name==method?.name}">
 											<img :src="method?.icon" class="my-auto py-1" :alt="method?.name" width="45" />
-											<div class="ps-2 my-auto">
+											<div class="ps-2 my-auto text-gold" :class="{'text-dark': selectedMethod?.name==method?.name}">
 												<p class="m-0">{{ method.name }}</p>
 												<small>{{ method.tag }}</small>
 											</div>
@@ -218,6 +252,16 @@ async function castVote() {
 											<span class="bi bi-copy ms-auto text-muted" v-else></span>
 										</button>
 									</div>
+									<!-- <div class="col-12 pt-3" >
+										<button type="button" @click="Pay(); selectMethod(null)" class="btn border-gold bg-dark text-gold text-start w-100 d-flex py-2"
+											:class="{'bg-gold text-dark': selectedMethod?.name=='card'}">
+											<i class="my-auto py-1 bi bi-credit-card h2 d-block text-center" style="width:45px;"></i>
+											<div class="ps-2 my-auto">
+												<p class="m-0">Card Payment</p>
+												<small>Fast and secure debit/credit card payment</small>
+											</div>
+										</button>
+									</div> -->
 									<small class="text-danger d-block mt-1 mb-3" v-if="formerr?.payment_method">{{ formerr?.payment_method }}</small>
 									<p v-else-if="selectedMethod" class="d-block mt-3 mb-0" style="opacity:.7;">
 										<i class="bi bi-exclamation-circle text-gold me-1 h5"></i>
@@ -267,22 +311,27 @@ async function castVote() {
 								<div class="row pt-2">
 									<div class="col-12">
 										<div class="d-flex mb-1">
-											<label>Proof of payment (optional):</label>
-											<button v-if="file" class="btn p-0 text-danger ms-auto" type="button" @click="file=null;preview=null">&times; clear</button>
+											<label>Proof of payment:</label>
+											<button v-if="files.length" class="btn p-0 text-danger ms-auto" type="button" @click="files=[];previews=[]">&times; clear</button>
 										</div>
-										<input type="file" accept="image/*" @change="handleFileChange" class="d-none" />
+										<input type="file" accept="image/*" multiple @change="handleFileChange" class="d-none" />
 										<button type="button"
-											class="form-control my-1 p-3 py-4 position-relative"
+											class="form-control my-1 p-3 py-4 position-relative text-light"
 											onclick="document.querySelector('input[type=file]')?.click()"
-											:class="{'text-white': preview}">
+											:class="{'text-white': previews}">
 											<i class="bi bi-cloud-arrow-up pe-1 display-2 mb-3"></i>
-											<span class="d-block">{{ file ? 'Change file' : 'Choose file' }}</span>
-											<small class="d-block pt-2" style="opacity:.6;">{{ file ? file.name : 'Upload screenshot or reciept of your payment.' }}</small>
-											<img :src="preview??undefined"
-												v-if="preview"
-												style="position:absolute;opacity:.3;z-index:1;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;"
-											/>
+											<span class="d-block">{{ files.length ? 'Add file' : 'Select files' }}</span>
+											<small class="d-block pt-2" style="opacity:.6;">{{ files.length ? 'Select another file' : 'Upload reciept or payment photo.' }}</small>
 										</button>
+										<div class="row py-3" v-if="previews.length">
+											<div class="col-3" v-for="prev in previews">
+												<div style="transform:scale(1,1);"
+													class="shadow h-100 bg-dark"
+													:style="`aspect-ratio:1 / 1;background-image:url(${prev});background-position:center;background-size:cover;`">
+													<span class="close-btn text-danger"></span>
+												</div>
+											</div>
+										</div>
 									</div>
 									<div class="col-12 mb-2" :class="{'mt-4': !formerr?.payment_method}">
 										<label class="mb-1">Email address:</label>

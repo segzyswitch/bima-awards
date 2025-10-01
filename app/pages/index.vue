@@ -69,8 +69,8 @@ onMounted(async () => {
 			</div>
 			<div class="row g-5" v-else>
 				<div v-for="(nominee, idx) in contestants" :key="idx" class="col-sm-4 text-center">
-					<button class="card border-0 p-1 shadow-sm" data-bs-toggle="modal" :data-bs-target="`#Modal_${nominee.id}`">
-						<div class="card-body bg-dark py-4">
+					<button class="w-100 h-100 card border-0 p-1 shadow-sm" data-bs-toggle="modal" :data-bs-target="`#Modal_${nominee.id}`">
+						<div class="w-100 card-body bg-dark py-4 d-flex flex-column justify-content-center">
 							<div class="col-9 col-sm-7 mx-auto py-3 rounded-circle mb-3">
 								<!-- <div class="contest-img overflow-hidden"><img :src="nominee.image" class="w-100" :alt="nominee.name" /></div> -->
 								<div class="contest-img overflow-hidden border-0 p-2"

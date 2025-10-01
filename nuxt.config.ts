@@ -11,10 +11,8 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'Bima Awards Online Voting' }
       ],
-      // link: [
-      //   { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-      // ],
       link: [
+        { rel: 'icon', href: '/bima-logo.png' },
         { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css' },
         { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css' },
       ],
@@ -35,6 +33,7 @@ export default defineNuxtConfig({
       messagingSenderId: process.env.MESSAGING_SENDER_ID,
       appId: process.env.APP_ID,
       measurementId: process.env.MEASUREMENT_ID,
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
     }
   }
 })
