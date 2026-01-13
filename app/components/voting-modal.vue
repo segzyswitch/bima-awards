@@ -22,7 +22,7 @@ const votePricing = [
 	{ votes: 120, price: 300 }
 ];
 
-const activePage:any = ref('checkout'); // null, 'payment', 'checkout'
+const activePage:any = ref(null); // null, 'payment', 'checkout'
 const manualAmount = ref(0);
 const donateTerms = ref(false);
 
