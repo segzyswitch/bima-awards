@@ -13,7 +13,6 @@ const props = defineProps<{
 }>();
 
 const votePricing = [
-	{ votes: 10, price: 25 },
 	{ votes: 20, price: 50 },
 	{ votes: 30, price: 75 },
 	{ votes: 40, price: 100 },
